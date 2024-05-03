@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diffie Hellman Key Exchange Algorithm</title>
+</head>
+<body>
+  <h2>Diffie Hellman Key Exchange Algorithm</h2>
+  <div>
+    <label for="prime">Prime Number (p):</label>
+    <input type="number" id="prime" required />
+    <button onclick="checkPrime()">Check Prime</button>
+    <span id="primeStatus"></span>
+  </div>
+  <br />
+  <div>
+    <label for="base">Generator (g):</label>
+    <input type="number" id="base" required />
+    <button onclick="checkGenerator()">Check Generator</button>
+    <span id="generatorStatus"></span>
+  </div>
+  <br />
+  <hr />
+  <div>
+    <h3>For Alice:</h3>
+    <label for="privateKeyAlice">Alice's Private Key (Xa):</label>
+    <input type="number" id="privateKeyAlice" required />
+    <button onclick="calculatePublicKey('Alice')">
+      Calculate Alice's Public Key
+    </button>
+  </div>
+  <br />
+  <div>
+    <label for="publicKeyAlice">Alice's Public Key (A):</label>
+    <input type="text" id="publicKeyAlice" readonly />
+  </div>
+  <br />
+  <hr />
+  <div>
+    <h3>For Bob:</h3>
+    <label for="privateKeyBob">Bob's Private Key (Yb):</label>
+    <input type="number" id="privateKeyBob" required />
+    <button onclick="calculatePublicKey('Bob')">
+      Calculate Bob's Public Key
+    </button>
+  </div>
+  <br />
+  <div>
+    <label for="publicKeyBob">Bob's Public Key (B):</label>
+    <input type="text" id="publicKeyBob" readonly />
+  </div>
+  <br />
+  <hr />
+  <div>
+    <button onclick="calculateSharedSecretKey()">Calculate Secret Key</button>
+  </div>
+  <br />
+  <div>
+    <label for="sharedSecretKey">Secret Key of Alice and Bob(SK):</label>
+    <input type="text" id="sharedSecretKey" readonly />
+  </div>
+  <script>
+    // Function to perform modular exponentiation
+    function modExp(base, exp, mod) {
+      return BigInt(base) ** BigInt(exp) % BigInt(mod);
+    }
+
+    // Function to check if a number is prime
+    function isPrime(n) {
+      if (n <= 1) return false;
+      if (n <= 3) return true;
+      if (n % 2 === 0 || n % 3 === 0) return false;
+      for (let i = 5; i * i <= n; i += 6) {
+        if (n % i === 0 || n % (i + 2) === 0) return false;
+      }
+      return true;
+    }
+
+    // Function to check if the entered prime number is actually prime
+    function checkPrime() {
+      const primeInput = parseInt(document.getElementById("prime").value);
+      const primeStatus = document.getElementById("primeStatus");
+      if (isPrime(primeInput)) {
+        primeStatus.textContent = "Prime";
+        primeStatus.style.color = "green";
+      } else {
+        primeStatus.textContent = "Not Prime";
+        primeStatus.style.color = "red";
+      }
+    }
+
+    // Function to check if g is a primitive root of p
+    function checkGenerator() {
+      const prime = parseInt(document.getElementById("prime").value);
+      const base = parseInt(document.getElementById("base").value);
+      let factors = [];
+      let phi = prime - 1;
+      let n = phi;
+      for (let i = 2; i * i <= n; i++) {
+        if (n % i === 0) {
+          factors.push(i);
+          while (n % i === 0) {
+            n /= i;
+          }
+        }
+      }
+      if (n > 1) {
+        factors.push(n);
+      }
+      let isGenerator = true;
+      for (let factor of factors) {
+        if (modExp(base, phi / factor, prime) === 1n) {
+          isGenerator = false;
+          break;
+        }
+      }
+      const generatorStatus = document.getElementById("generatorStatus");
+      if (isGenerator) {
+        generatorStatus.textContent = "Primitive Root";
+        generatorStatus.style.color = "green";
+      } else {
+        generatorStatus.textContent = "Not a Primitive Root";
+        generatorStatus.style.color = "red";
+      }
+    }
+
+    // Function to calculate the public key using the private key
+    function calculatePublicKey(user) {
+      const prime = parseInt(document.getElementById("prime").value);
+      const base = parseInt(document.getElementById("base").value);
+      const privateKey = parseInt(document.getElementById("privateKey" + user).value);
+
+      const publicKey = modExp(base, privateKey, prime);
+      document.getElementById("publicKey" + user).value = publicKey;
+    }
+
+    // Function to calculate the shared secret key
+    function calculateSharedSecretKey() {
+      const prime = parseInt(document.getElementById("prime").value);
+      const publicKeyAlice = BigInt(document.getElementById("publicKeyAlice").value);
+      const publicKeyBob = BigInt(document.getElementById("publicKeyBob").value);
+      const privateKeyAlice = parseInt(document.getElementById("privateKeyAlice").value);
+      const privateKeyBob = parseInt(document.getElementById("privateKeyBob").value);
+
+      const sharedSecretKeyAlice = modExp(publicKeyBob, privateKeyAlice, prime);
+      const sharedSecretKeyBob = modExp(publicKeyAlice, privateKeyBob, prime);
+
+      if (sharedSecretKeyAlice === sharedSecretKeyBob) {
+        document.getElementById("sharedSecretKey").value = sharedSecretKeyAlice;
+      } else {
+        alert("Error: Shared secret keys do not match.");
+      }
+    }
+  </script>
+</body>
+</html>
